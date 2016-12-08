@@ -1,0 +1,22 @@
+.divtd {
+	position: relative;
+	float: left;
+	width: 200px;
+	font-weight: bold;
+	margin-top: 10px;
+	margin-bottom: 10px;
+}
+.divtd2 {
+	position: relative;
+        float: left;
+        width: 800px;	
+}
+.divtd2 input {
+	width: 600px;
+}
+.breakline {
+	clear: both;
+	float: left;
+	display: block;
+	position: relative;	
+}
