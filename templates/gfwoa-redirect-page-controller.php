@@ -18,7 +18,8 @@ function gfwoa_enqueue_scripts() {
 <script language="javascript">
 var url=document.URL;
 var hashidx=url.indexOf("#access_token=");
-var access_token = url.substring(hashidx+14);
+var ampstateidx=url.indexOf("&state");
+var access_token = url.substring(hashidx+14,ampstateidx);
 document.getElementById('access-token').innerHTML = access_token;
 </script>
 <button id="test-access-token-button" class="btn button">Test Token</button>
