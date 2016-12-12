@@ -7,6 +7,9 @@ Version: 1.0
 Author: Imam Prakoso
 Author URI: http://104.197.241.25
 */
+if (!session_id()) {
+    session_start();
+}
 if ( ! defined( 'ABSPATH' ) ) exit;
 class GFWOA {
 	//Singleton Class Pattern
@@ -41,13 +44,26 @@ class GFWOA {
 		
 	function init() {
 		add_action( 'admin_menu', array($this, 'gfwoa_add_submenu_in_settings' ));
-		add_action( 'admin_enqueue_scripts', array($this , 'gfwoa_admin_style'));
+		//add_action( 'admin_enqueue_scripts', array($this , 'gfwoa_admin_style'));
+		add_action( 'wp_enqueue_scripts', array($this, 'gfwoa_enqueue_scripts'));
 		add_shortcode($this->settings['gfwoa_redirect_page_shortcode_name'], array($this, 'gfwoa_redirect_shortcode_impl'));
 		add_shortcode($this->settings['gfwoa_trigger_endpoint_shortcode_name'], array($this, 'gfwoa_trigger_endpoint_shortcode_name_impl'));
+		add_action('wp_ajax_save_access_token',array($this,'gfwoa_save_access_token'));
+   		add_action('wp_ajax_nopriv_save_access_token',array($this,'gfwoa_save_access_token'));
+		add_action('wp_ajax_test_access_token', array($this,'gfwoa_test_access_token'));
+		add_action('wp_ajax_nopriv_test_access_token', array($this,'gfwoa_test_access_token'));
 	}
 
 	function gfwoa_trigger_endpoint_shortcode_name_impl($attributes, $content) {
 		return  $this->gfwoa_oauth_endpoint_html();
+	}
+
+	function gfwoa_enqueue_scripts() {
+		$url = admin_url('admin-ajax.php');
+		wp_localize_script( 'ajax_save_access_token', 'PT_Ajax_Access_Token', array(
+                                        'ajaxurl'       => $url,
+                                        'nextNonce'     => wp_create_nonce('gfwoa_ajax_nonce'),
+                )); 
 	}
 
 	function gfwoa_oauth_endpoint_html() {
@@ -123,7 +139,44 @@ class GFWOA {
         		$blog_page_id = wp_insert_post($blog_page);
     		}
 	}	
-	
+	function gfwoa_save_access_token() {
+		$access_token = trim($_GET['access_token']);
+		$nextnonce = trim($_GET['nextNonce']);
+		if(!wp_verify_nonce($nextnonce,'gfwoa_ajax_nonce')){
+                        die('Invalid Invocation');
+                } 	
+		$_SESSION['access_token'] = $access_token;		
+	}
+	function gfwoa_test_access_token() {
+		$nextnonce = trim($_GET['nextNonce']);
+                if(!wp_verify_nonce($nextnonce,'gfwoa_ajax_nonce')){
+                        die('Invalid Invocation');
+                }
+		//echo 'Access Token:'.$_SESSION['access_token'];	
+		$access_token = $_SESSION['access_token'];
+		$url = 'https://api-dot-skytruth-pleuston.appspot.com/v1/me';
+		$ch = curl_init();
+		$options = array(
+        		CURLOPT_RETURNTRANSFER => true,     // return web page
+        		CURLOPT_HEADER         => false,    // don't return headers
+        		CURLOPT_FOLLOWLOCATION => true,     // follow redirects
+        		CURLOPT_ENCODING       => "",       // handle all encodings
+        		CURLOPT_USERAGENT      => "spider", // who am i
+        		CURLOPT_AUTOREFERER    => true,     // set referer on redirect
+        		CURLOPT_CONNECTTIMEOUT => 120,      // timeout on connect
+        		CURLOPT_TIMEOUT        => 120,      // timeout on response
+        		CURLOPT_MAXREDIRS      => 10,       // stop after 10 redirects
+        		CURLOPT_SSL_VERIFYPEER => false,     // Disabled SSL Cert checks
+			CURLOPT_HTTPHEADER => array(
+				'Authorization: Bearer '.$access_token
+			),
+    		);
+		curl_setopt_array( $ch, $options );
+		curl_setopt($ch, CURLOPT_URL, $url);
+		$content = curl_exec($ch);
+		curl_close($ch);	
+		echo $content;		
+	}
 } // End Class GFWOA
 GFWOA::get_instance();
 ?>
