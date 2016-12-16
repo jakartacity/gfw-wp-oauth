@@ -2,7 +2,7 @@
 /*
 Plugin Name: Global Fishing Watch OAuth
 Plugin URI: http://104.197.241.25/gfw-oauth
-Description: This plugin have button to do open authentication to get access token to call API to do operation of global fishing watch functions.
+Description: This plugin have button to do open authentication to get access token to call API to do operation of global fishing watch functions. Master Environment.
 Version: 1.0
 Author: Imam Prakoso
 Author URI: http://104.197.241.25
